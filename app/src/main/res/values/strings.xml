@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">任务打卡</string>
+    <string name="add_task">添加任务</string>
+    <string name="edit_hint">输入任务名称</string>
+    <string name="select_all">全选</string>
+    <string name="deselect_all">取消全选</string>
+    <string name="reset_today">重置今日</string>
+    <string name="history">已完成</string>
+    <string name="no_history">暂无打卡记录</string>
+    <string name="clear_all">清空</string>
+    <string name="back">返回</string>
+    <string name="delete">删除</string>
+    <string name="drag_handle">拖动排序</string>
+    <string name="app_author">by 雨落凡间淋做图</string>
+    <string name="widget_description">查看并完成今日任务</string>
+    <string name="widget_empty">所有任务已完成 ✅</string>
+    <string name="done">完成</string>
+    <string name="shortcut_add_widget">添加小组件</string>
+    <string name="shortcut_add_widget_long">添加桌面小组件</string>
+    <string name="widget_pin_hint">请在弹窗中确认添加小组件</string>
+    <string name="widget_pin_manual">请长按桌面空白处→小组件→任务打卡，手动添加</string>
+</resources>

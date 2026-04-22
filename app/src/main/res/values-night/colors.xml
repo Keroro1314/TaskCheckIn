@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#BB86FC</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+    <color name="text_normal">#E0E0E0</color>
+    <color name="text_secondary">#9E9E9E</color>
+    <color name="text_completed">#6E6E6E</color>
+    <color name="delete_red">#CF6679</color>
+    <color name="bottomBarBg">#1E1E1E</color>
+    <color name="icon_tint">#757575</color>
+    <color name="taskItemBg">#2D2D2D</color>
+    <color name="taskItemBgChecked">#1A1A1A</color>
+</resources>

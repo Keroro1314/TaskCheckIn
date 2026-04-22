@@ -1,0 +1,57 @@
+package com.taskcheckin.widget
+
+import android.appwidget.AppWidgetManager
+import android.content.Context
+import android.content.Intent
+import android.view.View
+import android.widget.RemoteViews
+import android.widget.RemoteViewsService
+import com.taskcheckin.R
+import com.taskcheckin.data.local.AppDatabase
+import com.taskcheckin.data.local.TaskEntity
+
+class TaskWidgetFactory(
+    private val context: Context,
+    private val intent: Intent
+) : RemoteViewsService.RemoteViewsFactory {
+
+    private var tasks: List<TaskEntity> = emptyList()
+    private val widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
+
+    override fun onCreate() {}
+
+    override fun onDataSetChanged() {
+        // onDataSetChanged 在 RemoteViewsService 的 binder 线程执行，可以直接同步查询
+        try {
+            val db = AppDatabase.getInstance(context)
+            tasks = db.taskDao().getAllTasksSync().filter { !it.isCompleted }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            tasks = emptyList()
+        }
+    }
+
+    override fun getCount(): Int = tasks.size
+
+    override fun getViewAt(position: Int): RemoteViews {
+        val task = tasks[position]
+        val views = RemoteViews(context.packageName, R.layout.task_widget_item)
+
+        views.setTextViewText(R.id.tvTaskTitle, task.title)
+
+        // Fill-in intent for click handling (combines with pendingIntentTemplate)
+        val fillIntent = Intent().apply {
+            putExtra(TaskWidgetProvider.EXTRA_TASK_ID, task.id)
+        }
+        views.setOnClickFillInIntent(R.id.ivCheckbox, fillIntent)
+        views.setOnClickFillInIntent(R.id.tvTaskTitle, fillIntent)
+
+        return views
+    }
+
+    override fun getLoadingView(): RemoteViews? = null
+    override fun getViewTypeCount(): Int = 1
+    override fun getItemId(position: Int): Long = tasks.getOrNull(position)?.id ?: position.toLong()
+    override fun hasStableIds(): Boolean = true
+    override fun onDestroy() { tasks = emptyList() }
+}
