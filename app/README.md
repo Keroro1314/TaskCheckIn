@@ -17,14 +17,10 @@
 
 ### 安装 APK
 
-APK 位于项目目录：
+APK 位于旁边的release：
 ```
-task-checkin/app/build/outputs/apk/debug/
-```
-- `app-arm64-v8a-debug.apk` — 适用于 ARM 架构手机
-- `app-x86_64-debug.apk` — 适用于模拟器 / 部分平板
 
-将 APK 传到手机安装即可。
+ APK 在手机安装即可。
 
 ### 添加桌面小组件
 
