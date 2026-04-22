@@ -19,7 +19,7 @@
 
 APK 位于release：
 ```
-
+https://github.com/Keroro1314/TaskCheckIn/releases/tag/v1.0.0
 ```
  APK 于手机安装即可。
 
