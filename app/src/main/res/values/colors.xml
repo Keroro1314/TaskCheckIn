@@ -1,14 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Primary -->
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
+
+    <!-- Text -->
     <color name="text_normal">#212121</color>
     <color name="text_secondary">#757575</color>
     <color name="text_completed">#9E9E9E</color>
+
+    <!-- UI -->
     <color name="delete_red">#F44336</color>
     <color name="bottomBarBg">#FFFFFF</color>
     <color name="icon_tint">#BDBDBD</color>
     <color name="taskItemBg">#FFFFFF</color>
     <color name="taskItemBgChecked">#F5F5F5</color>
+    <color name="colorBackground">#FAFAFA</color>
+
+    <!-- v1.1.0 新增 -->
+    <color name="highlight_yellow">#FFFDE7</color>
+    <color name="divider">#E0E0E0</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="scheduled_accent">#1976D2</color>
+    <color name="checkbox_tint">#6200EE</color>
+    <color name="bottom_sheet_bg">#FFFFFF</color>
 </resources>

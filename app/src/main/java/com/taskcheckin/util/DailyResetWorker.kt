@@ -42,7 +42,7 @@ object DailyResetWorker {
         override fun doWork(): Result {
             val db = com.taskcheckin.data.local.AppDatabase.getInstance(context)
             kotlinx.coroutines.runBlocking {
-                db.taskDao().resetAllCompletions()
+                db.taskDao().resetAllCompletions(com.taskcheckin.data.local.TASK_TYPE_DAILY)
             }
             return Result.success()
         }

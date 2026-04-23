@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ===== v1.1.0 新增权限 ===== -->
+
+    <!-- 通知权限（Android 13+ 必须动态申请）-->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- 精确闹钟权限（Android 12+）-->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- 开机自启（重启后恢复闹钟）-->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- 唤醒锁（确保闹钟触发时手机唤醒）-->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- 厂商后台管理跳转（华为/小米/OPPO/vivo）-->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Vibration -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".TaskCheckInApp"
@@ -10,6 +32,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- ===== Activity ===== -->
         <activity
             android:name=".ui.main.MainActivity"
             android:exported="true"
@@ -34,7 +57,18 @@
             android:launchMode="singleTop"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <!-- Widget -->
+        <!-- 日历视图 Activity -->
+        <activity
+            android:name=".ui.calendar.CalendarActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.main.MainActivity" />
+
+        <!-- 厂商后台管理引导页 -->
+        <activity
+            android:name=".ui.BatteryOptimizationActivity"
+            android:exported="false" />
+
+        <!-- ===== Widget ===== -->
         <receiver
             android:name=".widget.TaskWidgetProvider"
             android:exported="true">
@@ -48,9 +82,35 @@
         </receiver>
 
         <service
-            android:name=".widget.TaskWidgetService"
+            android:name=".widget.DailyTaskWidgetService"
             android:exported="false"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <service
+            android:name=".widget.ScheduledTaskWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <!-- ===== 闹钟广播接收器 ===== -->
+        <receiver
+            android:name=".util.AlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.taskcheckin.ACTION_TASK_REMINDER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ===== 开机广播接收器（恢复闹钟） ===== -->
+        <receiver
+            android:name=".util.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <!-- 华为特殊 -->
+                <action android:name="com.huawei.android.launcherthird.APP_HOME_MODE_RECOVERY" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

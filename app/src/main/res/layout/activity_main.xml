@@ -6,9 +6,9 @@
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground">
+    android:background="@color/colorBackground">
 
-    <LinearLayout
+<LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
@@ -24,20 +24,47 @@
             app:titleTextColor="@android:color/white"
             app:subtitleTextColor="#B3FFFFFF">
 
+            <!-- 历史按钮 -->
             <ImageButton
                 android:id="@+id/btnHistory"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="end"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/history"
                 android:padding="12dp"
                 android:src="@drawable/ic_history"
                 app:tint="@android:color/white" />
+
+            <!-- 日历按钮 -->
+            <ImageButton
+                android:id="@+id/btnCalendar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/calendar"
+                android:padding="12dp"
+                android:src="@drawable/ic_calendar"
+                app:tint="@android:color/white" />
+
+            <!-- 电池/后台权限按钮 -->
+            <ImageButton
+                android:id="@+id/btnBattery"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/battery_permission"
+                android:padding="12dp"
+                android:src="@drawable/ic_battery"
+                app:tint="@android:color/white" />
+
+
         </androidx.appcompat.widget.Toolbar>
 
-        <!-- Task list -->
+        <!-- 任务列表 -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
@@ -48,15 +75,16 @@
             android:paddingBottom="8dp"
             tools:listitem="@layout/item_task" />
 
-        <!-- Bottom action bar -->
+        <!-- 底部操作栏 -->
         <LinearLayout
+            android:id="@+id/bottomBar"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:background="@color/bottomBarBg"
             android:elevation="4dp"
             android:gravity="center"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
+            android:paddingHorizontal="8dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSelectAll"
@@ -85,6 +113,16 @@
                 android:text="@string/reset_today"
                 android:textSize="13sp"
                 android:textColor="@color/delete_red" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnToggleFuture"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/view_future"
+                android:textSize="13sp"
+                android:textColor="@color/colorPrimary" />
         </LinearLayout>
     </LinearLayout>
 
