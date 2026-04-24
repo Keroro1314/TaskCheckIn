@@ -36,6 +36,11 @@ class MainViewModel(
     private val _highlightTaskId = MutableStateFlow<Long?>(null)
     val highlightTaskId: StateFlow<Long?> = _highlightTaskId.asStateFlow()
 
+    // ====== 撤回完成 ======
+    private var _lastCompletedTaskId: Long? = null
+    val canUndo: StateFlow<Boolean> = MutableStateFlow(false)
+    private val _canUndo = canUndo as MutableStateFlow
+
     // ====== 每日任务数据流 ======
     val dailyTasks: Flow<List<TaskEntity>> = taskRepository.getAllTasks()
         .map { tasks -> tasks.filter { it.taskType == TASK_TYPE_DAILY } }
@@ -91,7 +96,15 @@ class MainViewModel(
             }
 
             if (completed && task != null) {
+                _lastCompletedTaskId = id
+                _canUndo.value = true
                 historyRepository.addToHistory(task.title)
+            } else if (!completed) {
+                // 如果撤回的就是上次完成的，清除撤回状态
+                if (_lastCompletedTaskId == id) {
+                    _lastCompletedTaskId = null
+                    _canUndo.value = false
+                }
             }
         }
     }
@@ -129,6 +142,23 @@ class MainViewModel(
                 val task = taskRepository.getTaskById(id)
                 task?.let { taskRepository.updateTask(it.copy(title = newTitle.trim())) }
             }
+        }
+    }
+
+    /** 更新日程任务（编辑日期/时间/标题等）*/
+    fun updateScheduledTask(task: TaskEntity) {
+        viewModelScope.launch {
+            val oldTask = taskRepository.getTaskById(task.id)
+            // 如果是日程任务且日期/时间变了，重新设置闹钟
+            if (task.taskType == TASK_TYPE_SCHEDULED) {
+                // 先取消旧闹钟
+                oldTask?.let { AlarmScheduler.cancelTask(application, it) }
+                // 设置新闹钟
+                if (task.reminderTime > System.currentTimeMillis()) {
+                    AlarmScheduler.scheduleTask(application, task)
+                }
+            }
+            taskRepository.updateTask(task)
         }
     }
 
@@ -178,6 +208,13 @@ class MainViewModel(
                 taskRepository.updateOrder(task.id, index)
             }
         }
+    }
+
+    /** 撤回上一步完成的任务 */
+    fun undoLastComplete() {
+        val taskId = _lastCompletedTaskId ?: return
+        toggleTask(taskId, false)
+        // toggleTask(false) 内部已清除 _lastCompletedTaskId
     }
 
     class Factory(

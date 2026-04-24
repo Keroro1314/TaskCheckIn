@@ -23,20 +23,24 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /**
- * AddTaskBottomSheetDialog — 添加任务底部面板
+ * AddTaskBottomSheetDialog — 添加/编辑任务底部面板
  * 
  * 支持：
  * - 每日任务（默认）
  * - 日程任务（开启开关后显示日期/时间选择）
  * - 重复设置（每天/每周/每月）
+ * - 编辑模式：传入已有 TaskEntity，修改标题/日期/时间
  */
 class AddTaskBottomSheetDialog(
     private val context: Context,
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val existingTask: TaskEntity? = null  // 编辑模式
 ) : BottomSheetDialog(context) {
 
     private var onTaskAddedListener: ((TaskEntity) -> Unit)? = null
+    private var onTaskUpdatedListener: ((TaskEntity) -> Unit)? = null
 
+    private lateinit var tvDialogTitle: TextView
     private lateinit var etTitle: EditText
     private lateinit var tvCharCount: TextView
     private lateinit var switchSchedule: Switch
@@ -58,13 +62,17 @@ class AddTaskBottomSheetDialog(
     private val repeatOptions = arrayOf("仅一次", "每天", "每周", "每月")
     private val repeatValues = arrayOf(REPEAT_NONE, REPEAT_DAILY, REPEAT_WEEKLY, REPEAT_MONTHLY)
 
+    private val isEditMode get() = existingTask != null
+
     init {
         setContentView(R.layout.bottom_sheet_add_task)
         initViews()
         setupListeners()
+        if (isEditMode) fillExistingData()
     }
 
     private fun initViews() {
+        tvDialogTitle = findViewById(R.id.tvDialogTitle)!!
         etTitle = findViewById(R.id.etTaskTitle)!!
         tvCharCount = findViewById(R.id.tvCharCount)!!
         switchSchedule = findViewById(R.id.switchSchedule)!!
@@ -89,6 +97,32 @@ class AddTaskBottomSheetDialog(
         )
 
         updateDateTimeDisplay()
+        updateCharCount()
+    }
+
+    private fun fillExistingData() {
+        val task = existingTask!!
+
+        // 标题
+        etTitle.setText(task.title)
+
+        // 日程开关
+        val isScheduled = task.taskType == com.taskcheckin.data.local.TASK_TYPE_SCHEDULED
+        switchSchedule.isChecked = isScheduled
+        scheduleOptions.visibility = if (isScheduled) View.VISIBLE else View.GONE
+
+        // 日期和时间
+        if (task.dueDate > 0) selectedDate = task.dueDate
+        if (task.reminderTime > 0) selectedTime = task.reminderTime
+        updateDateTimeDisplay()
+
+        // 重复模式
+        val repeatIndex = repeatValues.indexOf(task.repeatMode)
+        if (repeatIndex >= 0) spinnerRepeat.setSelection(repeatIndex)
+
+        // UI 更新
+        tvDialogTitle.text = context.getString(R.string.edit_task)
+        btnCreate.text = context.getString(R.string.save_task)
         updateCharCount()
     }
 
@@ -125,9 +159,13 @@ class AddTaskBottomSheetDialog(
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        // 创建按钮
+        // 创建/保存按钮
         btnCreate.setOnClickListener {
-            createTask()
+            if (isEditMode) {
+                updateTask()
+            } else {
+                createTask()
+            }
         }
     }
 
@@ -220,7 +258,48 @@ class AddTaskBottomSheetDialog(
         dismiss()
     }
 
+    private fun updateTask() {
+        val title = etTitle.text.toString().trim()
+        if (title.isEmpty()) {
+            etTitle.error = "请输入任务名称"
+            return
+        }
+        if (title.length > 100) {
+            etTitle.error = "任务名称不能超过100字"
+            return
+        }
+
+        val task = existingTask!!
+        val isScheduled = switchSchedule.isChecked
+        val newTaskType = if (isScheduled) com.taskcheckin.data.local.TASK_TYPE_SCHEDULED
+        else com.taskcheckin.data.local.TASK_TYPE_DAILY
+
+        // 计算提醒时间
+        val reminderTime = if (isScheduled) {
+            val cal = Calendar.getInstance(Locale.CHINA).apply { timeInMillis = selectedDate }
+            val timeCal = Calendar.getInstance(Locale.CHINA).apply { timeInMillis = selectedTime }
+            cal.set(Calendar.HOUR_OF_DAY, timeCal.get(Calendar.HOUR_OF_DAY))
+            cal.set(Calendar.MINUTE, timeCal.get(Calendar.MINUTE))
+            cal.timeInMillis
+        } else 0L
+
+        val updatedTask = task.copy(
+            title = title,
+            taskType = newTaskType,
+            dueDate = if (isScheduled) selectedDate else 0L,
+            reminderTime = reminderTime,
+            repeatMode = if (isScheduled) selectedRepeat else REPEAT_NONE
+        )
+
+        onTaskUpdatedListener?.invoke(updatedTask)
+        dismiss()
+    }
+
     fun setOnTaskAddedListener(listener: (TaskEntity) -> Unit) {
         onTaskAddedListener = listener
+    }
+
+    fun setOnTaskUpdatedListener(listener: (TaskEntity) -> Unit) {
+        onTaskUpdatedListener = listener
     }
 }

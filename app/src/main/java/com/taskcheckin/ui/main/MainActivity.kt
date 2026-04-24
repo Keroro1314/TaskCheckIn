@@ -147,13 +147,16 @@ class MainActivity : AppCompatActivity() {
 
         adapter = TaskAdapter(
             editingTaskId = null,
-            onToggle = { id, completed -> viewModel.toggleTask(id, completed) },
+            onToggle = { id, completed ->
+                viewModel.toggleTask(id, completed)
+            },
             onTitleChanged = { id, title -> viewModel.saveTitleAndStopEditing(id, title) },
             onDelete = { task -> confirmDelete(task) },
             onReorder = { f, t -> viewModel.onItemMoved(f, t) },
             onStartEditing = { id -> viewModel.startEditing(id) },
             onStopEditing = { viewModel.stopEditing() },
-            onHighlight = { id -> viewModel.setHighlightTaskId(id) }
+            onHighlight = { id -> viewModel.setHighlightTaskId(id) },
+            onEditSchedule = { task -> showEditTaskBottomSheet(task) }
         )
 
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -192,6 +195,24 @@ class MainActivity : AppCompatActivity() {
             observeState()
         }
         updateFutureToggleButton()
+
+        // 撤回按钮
+        val btnUndo = findViewById<MaterialButton>(R.id.btnUndo)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.canUndo.collect { canUndo ->
+                    btnUndo.isEnabled = canUndo
+                    btnUndo.alpha = if (canUndo) 1f else 0.4f
+                }
+            }
+        }
+        btnUndo.setOnClickListener {
+            if (viewModel.canUndo.value) {
+                viewModel.undoLastComplete()
+            } else {
+                Snackbar.make(findViewById(R.id.rootLayout), "无任务可撤回", Snackbar.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun updateFutureToggleButton() {
@@ -233,6 +254,16 @@ class MainActivity : AppCompatActivity() {
         dialog.setOnTaskAddedListener { task ->
             viewModel.addTaskDirectly(task)
             Snackbar.make(findViewById(R.id.rootLayout), "任务已添加", Snackbar.LENGTH_SHORT).show()
+        }
+        dialog.show()
+    }
+
+    // ====== 编辑任务底部面板 ======
+    private fun showEditTaskBottomSheet(task: TaskEntity) {
+        val dialog = AddTaskBottomSheetDialog(this, taskRepository, existingTask = task)
+        dialog.setOnTaskUpdatedListener { updatedTask ->
+            viewModel.updateScheduledTask(updatedTask)
+            Snackbar.make(findViewById(R.id.rootLayout), getString(R.string.task_updated), Snackbar.LENGTH_SHORT).show()
         }
         dialog.show()
     }

@@ -41,7 +41,8 @@ class TaskAdapter(
     private val onReorder: (Int, Int) -> Unit,
     private val onStartEditing: (Long) -> Unit,
     private val onStopEditing: () -> Unit,
-    private val onHighlight: (Long) -> Unit
+    private val onHighlight: (Long) -> Unit,
+    private val onEditSchedule: (TaskEntity) -> Unit
 ) : ListAdapter<TaskListItem, RecyclerView.ViewHolder>(TaskDiffCallback()) {
 
     companion object {
@@ -151,6 +152,7 @@ class TaskAdapter(
         private val tvSchedule: TextView = itemView.findViewById(R.id.tvSchedule)
         private val dragHandle: ImageButton = itemView.findViewById(R.id.dragHandle)
         private val deleteButton: ImageButton = itemView.findViewById(R.id.deleteButton)
+        private val editButton: ImageButton = itemView.findViewById(R.id.editButton)
 
         fun bind(task: TaskEntity, isEditing: Boolean, isHighlighted: Boolean) {
             checkBox.setOnCheckedChangeListener(null)
@@ -158,6 +160,8 @@ class TaskAdapter(
             titleEditText.onFocusChangeListener = null
             titleTextView.setOnClickListener(null)
             deleteButton.setOnClickListener(null)
+            editButton.setOnClickListener(null)
+            tvSchedule.setOnClickListener(null)
 
             checkBox.isChecked = task.isCompleted
 
@@ -207,6 +211,17 @@ class TaskAdapter(
                 )
             } else {
                 tvSchedule.visibility = View.GONE
+            }
+
+            // 编辑按钮：常驻显示（未编辑状态时）
+            if (!isEditing) {
+                editButton.visibility = View.VISIBLE
+                editButton.setOnClickListener {
+                    if (editingTaskId != null) onStopEditing()
+                    onEditSchedule(task)
+                }
+            } else {
+                editButton.visibility = View.GONE
             }
 
             if (isEditing) {

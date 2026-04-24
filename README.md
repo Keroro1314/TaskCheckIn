@@ -3,7 +3,7 @@
 一款 Android 本地任务管理应用，支持桌面小组件打卡、日程任务、日历视图、闹钟提醒、历史记录、自动每日重置。
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-blue" alt="v1.1.0">
+  <img src="https://img.shields.io/badge/version-1.1.1-blue" alt="v1.1.1">
   <img src="https://img.shields.io/badge/minSdk-24-green" alt="minSdk 24">
   <img src="https://img.shields.io/badge/targetSdk-34-green" alt="targetSdk 34">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="MIT">
@@ -15,6 +15,8 @@
 |---|---|
 | 任务列表 | 添加/编辑/删除/拖动排序 |
 | 打卡完成 | 点击即打卡，数据存入历史 |
+| 撤回完成 | 底部栏常驻撤销按钮，误触打卡可一键撤回 |
+| 编辑任务 | 所有任务均可点击编辑按钮修改内容，日程任务支持修改日期和时间 |
 | 历史记录 | 查看每天完成了哪些任务 |
 | 每日重置 | 凌晨 0:01 自动重置所有任务 |
 | 桌面小组件 | 3x2 小组件，不进 App 也能打卡 |
@@ -54,6 +56,17 @@ app/build/outputs/apk/debug/app-debug.apk
 2. 找到「任务打卡」，长按拖到桌面即可
 
 ## 更新日志
+
+### v1.1.1 (2026-04-24)
+
+**新增功能**
+- **撤回完成**：底部栏新增常驻「撤销」按钮，打卡后可随时撤回，无需赶 Snackbar 超时
+- **编辑所有任务**：编辑按钮对所有任务可见（不仅是日程任务），点击即可修改任务内容
+- **日程任务编辑**：日程任务支持修改日期、时间和重复设置，保存后自动更新闹钟
+
+**优化**
+- 编辑按钮始终显示，编辑模式下自动隐藏
+- 撤回按钮有任务可撤回时高亮，无任务时显示提示
 
 ### v1.1.0 (2026-04-23)
 

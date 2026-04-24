@@ -17,9 +17,10 @@
 
     <!-- 标题 -->
     <TextView
+        android:id="@+id/tvDialogTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="新建任务"
+        android:text="@string/new_task"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/text_normal" />

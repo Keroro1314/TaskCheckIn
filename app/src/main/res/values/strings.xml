@@ -68,6 +68,16 @@
     <string name="battery_open_settings">打开后台管理设置</string>
     <string name="battery_skip">暂不设置（提醒可能无法准时）</string>
 
+    <!-- v1.1.1 -->
+    <string name="edit_task">编辑任务</string>
+    <string name="save_task">保存修改</string>
+    <string name="task_updated">任务已更新</string>
+    <string name="task_completed">任务完成</string>
+    <string name="undo_delete">撤销删除</string>
+    <string name="edit_schedule">编辑日程</string>
+    <string name="confirm_delete_title">删除任务</string>
+    <string name="confirm_delete_msg">确定删除「%s」？</string>
+
     <!-- 背景图 -->
     <string name="set_background">设置背景</string>
     <string name="background_image">背景图片</string>

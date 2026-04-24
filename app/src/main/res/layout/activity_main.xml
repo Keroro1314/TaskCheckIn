@@ -115,6 +115,16 @@
                 android:textColor="@color/delete_red" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUndo"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="撤销"
+                android:textSize="13sp"
+                android:textColor="@color/colorPrimary" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnToggleFuture"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="0dp"
