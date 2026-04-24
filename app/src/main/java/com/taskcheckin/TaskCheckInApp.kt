@@ -5,6 +5,7 @@ import com.taskcheckin.data.local.AppDatabase
 import com.taskcheckin.data.repository.TaskHistoryRepository
 import com.taskcheckin.data.repository.TaskRepository
 import com.taskcheckin.util.DailyResetWorker
+import com.taskcheckin.util.IncompleteTaskCheckWorker
 
 class TaskCheckInApp : Application() {
 
@@ -15,5 +16,7 @@ class TaskCheckInApp : Application() {
     override fun onCreate() {
         super.onCreate()
         DailyResetWorker.schedule(this)
+        // 调度每日未完成任务提醒检查（每天20:00触发）
+        IncompleteTaskCheckWorker.schedule(this)
     }
 }

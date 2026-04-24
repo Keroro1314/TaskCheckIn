@@ -56,6 +56,50 @@
             android:textColor="@color/text_secondary" />
     </LinearLayout>
 
+    <!-- 仅今日开关 -->
+    <LinearLayout
+        android:id="@+id/layoutOnlyToday"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/only_today_switch"
+                android:textSize="15sp"
+                android:textColor="@color/text_normal" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/only_today_switch_desc"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/switchOnlyToday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true" />
+    </LinearLayout>
+
+    <!-- 分隔线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/divider" />
+
     <!-- 日程开关 -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -73,14 +117,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="📅 设置具体时间提醒"
+                android:text="@string/schedule_switch"
                 android:textSize="15sp"
                 android:textColor="@color/text_normal" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="开启后将创建日程任务"
+                android:text="@string/schedule_switch_desc"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary" />
         </LinearLayout>

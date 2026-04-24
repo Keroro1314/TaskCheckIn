@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 /** 任务类型常量 */
 const val TASK_TYPE_DAILY = 0
 const val TASK_TYPE_SCHEDULED = 1
+const val TASK_TYPE_TODAY = 2
 
 /** 重复模式常量 */
 const val REPEAT_NONE = "NONE"

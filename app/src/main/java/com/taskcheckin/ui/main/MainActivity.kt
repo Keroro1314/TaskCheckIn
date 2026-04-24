@@ -1,16 +1,11 @@
 package com.taskcheckin.ui.main
 
 import android.Manifest
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
-import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -24,20 +19,18 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
+import android.widget.Toast
 import com.taskcheckin.R
 import com.taskcheckin.TaskCheckInApp
 import com.taskcheckin.data.local.TaskEntity
 import com.taskcheckin.data.local.TASK_TYPE_DAILY
 import com.taskcheckin.data.local.TASK_TYPE_SCHEDULED
-import com.taskcheckin.data.local.REPEAT_NONE
+import com.taskcheckin.data.local.TASK_TYPE_TODAY
 import com.taskcheckin.data.repository.TaskRepository
 import com.taskcheckin.ui.calendar.CalendarActivity
-import com.taskcheckin.util.AlarmScheduler
 import com.taskcheckin.util.NotificationHelper
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,9 +40,6 @@ class MainActivity : AppCompatActivity() {
 
     // 分组状态
     private var showFutureTasks = false
-
-    private val dateFormat = SimpleDateFormat("yyyy年MM月dd日", Locale.CHINA)
-    private val timeFormat = SimpleDateFormat("HH:mm", Locale.CHINA)
 
     // ====== 权限申请 ======
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -82,13 +72,7 @@ class MainActivity : AppCompatActivity() {
         setupFab()
         setupBottomActions()
         observeState()
-        // 检查通知权限
         requestNotificationPermissionIfNeeded()
-
-        // 检查精确闹钟权限
-        checkExactAlarmPermission()
-
-        // 处理从通知点进来的高亮
         handleNotificationIntent()
     }
 
@@ -99,7 +83,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ====== 权限 ======
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -109,23 +92,7 @@ class MainActivity : AppCompatActivity() {
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
-        // 创建通知渠道
         NotificationHelper.createNotificationChannel(this)
-    }
-
-    private fun checkExactAlarmPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (!AlarmScheduler.canScheduleExactAlarms(this)) {
-                // 提示用户去开启精确闹钟权限
-                Snackbar.make(
-                    findViewById(R.id.rootLayout),
-                    "需要精确闹钟权限才能准时提醒",
-                    Snackbar.LENGTH_LONG
-                ).setAction("去设置") {
-                    AlarmScheduler.openExactAlarmSettings(this)
-                }.show()
-            }
-        }
     }
 
     // ====== 工具栏 ======
@@ -224,23 +191,26 @@ class MainActivity : AppCompatActivity() {
     private fun observeState() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // 合并：每日任务Flow + 日程任务Flow + 编辑状态
-                combine(
+                // 合并每日 + 仅今日 + 日程三种任务数据流
+                val allTasksFlow = combine(
                     viewModel.dailyTasks,
-                    viewModel.upcomingScheduledTasks,
-                    viewModel.editingTaskId
-                ) { daily, upcoming, editingId ->
-                    Triple(daily, upcoming, editingId)
-                }.collect { (daily, upcoming, editingId) ->
-                    // 今日待办：未完成的每日任务 + 今日日程
+                    viewModel.todayOnlyTasks,
+                    viewModel.upcomingScheduledTasks
+                ) { daily, todayOnly, upcoming ->
+                    Triple(daily, todayOnly, upcoming)
+                }
+
+                // 再合并任务数据流 + 编辑状态
+                combine(allTasksFlow, viewModel.editingTaskId) { tasks, editingId ->
+                    val (daily, todayOnly, upcoming) = tasks as Triple<List<TaskEntity>, List<TaskEntity>, List<TaskEntity>>
                     val todayCal = taskRepository.normalizeDate(System.currentTimeMillis())
                     val todayScheduled = upcoming.filter { it.dueDate == todayCal }
-                    val todayItems = daily.filter { !it.isCompleted } + todayScheduled
-
-                    // 未来日程：明天及以后的日程任务
+                    val todayItems = daily.filter { !it.isCompleted } +
+                            todayOnly.filter { !it.isCompleted } +
+                            todayScheduled
                     val futureItems = upcoming.filter { it.dueDate > todayCal }
-
-                    // 只更新编辑状态（不重建 adapter）
+                    Triple(todayItems, futureItems, editingId)
+                }.collect { (todayItems, futureItems, editingId) ->
                     adapter.setEditingTaskId(editingId)
                     adapter.submitGroupedList(todayItems, futureItems, showFutureTasks)
                 }
@@ -253,7 +223,7 @@ class MainActivity : AppCompatActivity() {
         val dialog = AddTaskBottomSheetDialog(this, taskRepository)
         dialog.setOnTaskAddedListener { task ->
             viewModel.addTaskDirectly(task)
-            Snackbar.make(findViewById(R.id.rootLayout), "任务已添加", Snackbar.LENGTH_SHORT).show()
+            Toast.makeText(this, "任务已添加", Toast.LENGTH_SHORT).show()
         }
         dialog.show()
     }
@@ -275,7 +245,7 @@ class MainActivity : AppCompatActivity() {
             .setMessage("确定删除「${task.title}」？")
             .setPositiveButton("删除") { _, _ ->
                 viewModel.deleteTask(task)
-                Snackbar.make(findViewById(R.id.rootLayout), "已删除", Snackbar.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "已删除", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("取消", null)
             .show()

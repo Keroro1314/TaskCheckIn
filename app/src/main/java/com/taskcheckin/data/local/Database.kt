@@ -12,6 +12,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks ORDER BY orderIndex ASC")
     fun getAllTasks(): Flow<List<TaskEntity>>
 
+    @Query("DELETE FROM tasks WHERE taskType = :taskType AND dueDate < :today")
+    suspend fun deleteStaleTodayTasks(taskType: Int, today: Long)
+
     @Query("SELECT * FROM tasks WHERE taskType = :taskType ORDER BY orderIndex ASC")
     fun getTasksByTypeSync(taskType: Int): List<TaskEntity>
 
@@ -25,6 +28,9 @@ interface TaskDao {
 
     @Query("SELECT * FROM tasks WHERE taskType = :taskType AND isCompleted = 0 AND dueDate >= :today ORDER BY dueDate ASC, reminderTime ASC")
     fun getUpcomingScheduledTasks(taskType: Int, today: Long): Flow<List<TaskEntity>>
+
+    @Query("SELECT * FROM tasks WHERE taskType = :taskType AND dueDate = :dueDate ORDER BY reminderTime ASC")
+    fun getTasksByDateSync(taskType: Int, dueDate: Long): List<TaskEntity>
 
     @Query("SELECT * FROM tasks WHERE taskType = :taskType AND dueDate = :today ORDER BY reminderTime ASC")
     fun getTodayScheduledTasks(taskType: Int, today: Long): Flow<List<TaskEntity>>

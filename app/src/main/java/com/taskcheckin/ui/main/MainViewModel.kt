@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.taskcheckin.data.local.TaskEntity
 import com.taskcheckin.data.local.TASK_TYPE_DAILY
 import com.taskcheckin.data.local.TASK_TYPE_SCHEDULED
+import com.taskcheckin.data.local.TASK_TYPE_TODAY
 import com.taskcheckin.data.repository.TaskHistoryRepository
 import com.taskcheckin.data.repository.TaskRepository
 import com.taskcheckin.util.AlarmScheduler
@@ -38,17 +39,26 @@ class MainViewModel(
 
     // ====== 撤回完成 ======
     private var _lastCompletedTaskId: Long? = null
-    val canUndo: StateFlow<Boolean> = MutableStateFlow(false)
-    private val _canUndo = canUndo as MutableStateFlow
+    private val _canUndo = MutableStateFlow(false)
+    val canUndo: StateFlow<Boolean> = _canUndo.asStateFlow()
+    private var _lastDeletedTask: TaskEntity? = null
 
     // ====== 每日任务数据流 ======
     val dailyTasks: Flow<List<TaskEntity>> = taskRepository.getAllTasks()
         .map { tasks -> tasks.filter { it.taskType == TASK_TYPE_DAILY } }
 
+    // ====== 仅今日任务数据流 ======
+    val todayOnlyTasks: Flow<List<TaskEntity>> = taskRepository.getAllTasks()
+        .map { tasks -> tasks.filter { it.taskType == TASK_TYPE_TODAY } }
+
     // ====== 日程任务数据流 ======
     val upcomingScheduledTasks: Flow<List<TaskEntity>> = taskRepository.getUpcomingScheduledTasks()
 
     init {
+        viewModelScope.launch {
+            // 启动时清理昨日遗留的仅今日任务
+            taskRepository.cleanStaleTodayTasks()
+        }
         viewModelScope.launch {
             // 原始任务列表（用于 widget 通知）
             taskRepository.getAllTasks().collect { tasks ->
@@ -95,12 +105,11 @@ class MainViewModel(
                 AlarmScheduler.cancelTask(application, task)
             }
 
-            if (completed && task != null) {
+            if (completed) {
                 _lastCompletedTaskId = id
                 _canUndo.value = true
-                historyRepository.addToHistory(task.title)
-            } else if (!completed) {
-                // 如果撤回的就是上次完成的，清除撤回状态
+                task?.let { historyRepository.addToHistory(it.title) }
+            } else {
                 if (_lastCompletedTaskId == id) {
                     _lastCompletedTaskId = null
                     _canUndo.value = false
@@ -168,7 +177,17 @@ class MainViewModel(
             if (task.taskType == TASK_TYPE_SCHEDULED) {
                 AlarmScheduler.cancelTask(application, task)
             }
+            // 记录被删除的任务，支持撤销
+            _lastDeletedTask = task
+            _canUndo.value = true
+            _lastCompletedTaskId = null // 清除完成撤回状态（只能撤销一种操作）
             taskRepository.deleteTask(task)
+        }
+    }
+
+    fun deleteTaskById(id: Long) {
+        viewModelScope.launch {
+            taskRepository.deleteTaskById(id)
         }
     }
 
@@ -210,11 +229,29 @@ class MainViewModel(
         }
     }
 
-    /** 撤回上一步完成的任务 */
+    /** 撤回上一步：完成 或 删除 */
     fun undoLastComplete() {
+        // 优先处理删除撤销
+        _lastDeletedTask?.let { task ->
+            _lastDeletedTask = null
+            _canUndo.value = false
+            viewModelScope.launch {
+                taskRepository.addTaskDirectly(task)
+                // 恢复闹钟
+                if (task.taskType == TASK_TYPE_SCHEDULED && task.reminderTime > System.currentTimeMillis()) {
+                    val saved = taskRepository.getTaskById(task.id)
+                    saved?.let { AlarmScheduler.scheduleTask(application, it) }
+                }
+            }
+            return
+        }
+        // 处理完成撤销
         val taskId = _lastCompletedTaskId ?: return
-        toggleTask(taskId, false)
-        // toggleTask(false) 内部已清除 _lastCompletedTaskId
+        _lastCompletedTaskId = null
+        _canUndo.value = false
+        viewModelScope.launch {
+            toggleTask(taskId, false)
+        }
     }
 
     class Factory(

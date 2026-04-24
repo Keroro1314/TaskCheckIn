@@ -10,6 +10,9 @@ class TaskRepository(private val taskDao: TaskDao) {
     // ===== 每日任务 =====
     fun getAllTasks(): Flow<List<TaskEntity>> = taskDao.getAllTasks()
 
+    /** 同步获取所有任务（用于 Worker、Widget 等同步上下文） */
+    fun getAllTasksSync(): List<TaskEntity> = taskDao.getAllTasksSync()
+
     fun getDailyTasks(): Flow<List<TaskEntity>> = taskDao.getTasksByType(TASK_TYPE_DAILY)
 
     fun getDailyTasksSync(): List<TaskEntity> = taskDao.getTasksByTypeSync(TASK_TYPE_DAILY)
@@ -92,6 +95,11 @@ class TaskRepository(private val taskDao: TaskDao) {
     /** 直接插入 TaskEntity（由 ViewModel addTaskDirectly 调用）*/
     suspend fun addTaskDirectly(task: TaskEntity): Long {
         return taskDao.insertTask(task)
+    }
+
+    /** 删除昨日遗留的仅今日任务 */
+    suspend fun cleanStaleTodayTasks() {
+        taskDao.deleteStaleTodayTasks(TASK_TYPE_TODAY, normalizeDate(System.currentTimeMillis()))
     }
 
     // ===== 辅助函数 =====

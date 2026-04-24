@@ -5,28 +5,29 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.*
 import androidx.core.content.ContextCompat
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.taskcheckin.R
 import com.taskcheckin.data.local.TaskEntity
+import com.taskcheckin.data.local.TASK_TYPE_DAILY
+import com.taskcheckin.data.local.TASK_TYPE_SCHEDULED
+import com.taskcheckin.data.local.TASK_TYPE_TODAY
 import com.taskcheckin.data.local.REPEAT_NONE
 import com.taskcheckin.data.local.REPEAT_DAILY
 import com.taskcheckin.data.local.REPEAT_WEEKLY
 import com.taskcheckin.data.local.REPEAT_MONTHLY
 import com.taskcheckin.data.repository.TaskRepository
-import com.taskcheckin.util.AlarmScheduler
 import java.text.SimpleDateFormat
 import java.util.*
 
 /**
  * AddTaskBottomSheetDialog — 添加/编辑任务底部面板
- * 
+ *
  * 支持：
  * - 每日任务（默认）
+ * - 仅今日任务（第二天自动消失）
  * - 日程任务（开启开关后显示日期/时间选择）
  * - 重复设置（每天/每周/每月）
  * - 编辑模式：传入已有 TaskEntity，修改标题/日期/时间
@@ -44,6 +45,8 @@ class AddTaskBottomSheetDialog(
     private lateinit var etTitle: EditText
     private lateinit var tvCharCount: TextView
     private lateinit var switchSchedule: Switch
+    private lateinit var layoutOnlyToday: LinearLayout
+    private lateinit var switchOnlyToday: Switch
     private lateinit var scheduleOptions: LinearLayout
     private lateinit var tvSelectDate: TextView
     private lateinit var tvSelectTime: TextView
@@ -56,7 +59,6 @@ class AddTaskBottomSheetDialog(
     private val todayCal = Calendar.getInstance(Locale.CHINA)
 
     private val dateFormat = SimpleDateFormat("yyyy年MM月dd日", Locale.CHINA)
-    private val timeFormat = SimpleDateFormat("HH:mm", Locale.CHINA)
     private val time24h = SimpleDateFormat("HH:mm", Locale.CHINA)
 
     private val repeatOptions = arrayOf("仅一次", "每天", "每周", "每月")
@@ -76,6 +78,8 @@ class AddTaskBottomSheetDialog(
         etTitle = findViewById(R.id.etTaskTitle)!!
         tvCharCount = findViewById(R.id.tvCharCount)!!
         switchSchedule = findViewById(R.id.switchSchedule)!!
+        layoutOnlyToday = findViewById(R.id.layoutOnlyToday)!!
+        switchOnlyToday = findViewById(R.id.switchOnlyToday)!!
         scheduleOptions = findViewById(R.id.scheduleOptions)!!
         tvSelectDate = findViewById(R.id.tvSelectDate)!!
         tvSelectTime = findViewById(R.id.tvSelectTime)!!
@@ -101,13 +105,16 @@ class AddTaskBottomSheetDialog(
     }
 
     private fun fillExistingData() {
+        // 编辑模式不显示"仅今日"选项
+        layoutOnlyToday.visibility = View.GONE
+
         val task = existingTask!!
 
         // 标题
         etTitle.setText(task.title)
 
         // 日程开关
-        val isScheduled = task.taskType == com.taskcheckin.data.local.TASK_TYPE_SCHEDULED
+        val isScheduled = task.taskType == TASK_TYPE_SCHEDULED
         switchSchedule.isChecked = isScheduled
         scheduleOptions.visibility = if (isScheduled) View.VISIBLE else View.GONE
 
@@ -140,6 +147,9 @@ class AddTaskBottomSheetDialog(
         switchSchedule.setOnCheckedChangeListener { _, isChecked ->
             scheduleOptions.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
+
+        // 仅今日开关 — 仅在新建模式下可用（默认已勾选）
+        switchOnlyToday.setOnCheckedChangeListener { _, _ -> }
 
         // 日期选择
         tvSelectDate.setOnClickListener {
@@ -232,12 +242,17 @@ class AddTaskBottomSheetDialog(
                 (0..999).random()
 
         val isScheduled = switchSchedule.isChecked
-        val taskType = if (isScheduled) com.taskcheckin.data.local.TASK_TYPE_SCHEDULED
-        else com.taskcheckin.data.local.TASK_TYPE_DAILY
+        val isOnlyToday = switchOnlyToday.isChecked
+
+        // 任务类型：日程 > 仅今日 > 每日
+        val taskType = when {
+            isScheduled -> TASK_TYPE_SCHEDULED
+            isOnlyToday -> TASK_TYPE_TODAY
+            else -> TASK_TYPE_DAILY
+        }
 
         // 计算提醒时间（用于日程任务）
         val reminderTime = if (isScheduled) {
-            // 合并日期和时间
             val cal = Calendar.getInstance(Locale.CHINA).apply { timeInMillis = selectedDate }
             val timeCal = Calendar.getInstance(Locale.CHINA).apply { timeInMillis = selectedTime }
             cal.set(Calendar.HOUR_OF_DAY, timeCal.get(Calendar.HOUR_OF_DAY))
@@ -271,8 +286,7 @@ class AddTaskBottomSheetDialog(
 
         val task = existingTask!!
         val isScheduled = switchSchedule.isChecked
-        val newTaskType = if (isScheduled) com.taskcheckin.data.local.TASK_TYPE_SCHEDULED
-        else com.taskcheckin.data.local.TASK_TYPE_DAILY
+        val newTaskType = if (isScheduled) TASK_TYPE_SCHEDULED else TASK_TYPE_DAILY
 
         // 计算提醒时间
         val reminderTime = if (isScheduled) {

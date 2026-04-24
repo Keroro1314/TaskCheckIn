@@ -100,6 +100,20 @@
             </intent-filter>
         </receiver>
 
+        <!-- ===== 未完成任务提醒广播接收器 ===== -->
+        <receiver
+            android:name=".util.ReminderActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.taskcheckin.ACTION_REMIND_LATER" />
+                <action android:name="com.taskcheckin.ACTION_DISMISS" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".util.ReminderLaterReceiver"
+            android:exported="false" />
+
         <!-- ===== 开机广播接收器（恢复闹钟） ===== -->
         <receiver
             android:name=".util.BootReceiver"

@@ -7,7 +7,7 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import com.taskcheckin.R
-import com.taskcheckin.data.local.AppDatabase
+import com.taskcheckin.TaskCheckInApp
 import com.taskcheckin.data.local.TaskEntity
 
 class TaskWidgetFactory(
@@ -23,8 +23,8 @@ class TaskWidgetFactory(
     override fun onDataSetChanged() {
         // onDataSetChanged 在 RemoteViewsService 的 binder 线程执行，可以直接同步查询
         try {
-            val db = AppDatabase.getInstance(context)
-            tasks = db.taskDao().getAllTasksSync().filter { !it.isCompleted }
+            val repository = (context.applicationContext as TaskCheckInApp).taskRepository
+            tasks = repository.getAllTasksSync().filter { !it.isCompleted }
         } catch (e: Exception) {
             e.printStackTrace()
             tasks = emptyList()

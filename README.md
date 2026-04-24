@@ -3,7 +3,7 @@
 一款 Android 本地任务管理应用，支持桌面小组件打卡、日程任务、日历视图、闹钟提醒、历史记录、自动每日重置。
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.1-blue" alt="v1.1.1">
+  <img src="https://img.shields.io/badge/version-1.1.2-blue" alt="v1.1.2">
   <img src="https://img.shields.io/badge/minSdk-24-green" alt="minSdk 24">
   <img src="https://img.shields.io/badge/targetSdk-34-green" alt="targetSdk 34">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="MIT">
@@ -16,6 +16,7 @@
 | 任务列表 | 添加/编辑/删除/拖动排序 |
 | 打卡完成 | 点击即打卡，数据存入历史 |
 | 撤回完成 | 底部栏常驻撤销按钮，误触打卡可一键撤回 |
+| 撤回删除 | 底部栏撤销按钮同时支持恢复误删任务 |
 | 编辑任务 | 所有任务均可点击编辑按钮修改内容，日程任务支持修改日期和时间 |
 | 历史记录 | 查看每天完成了哪些任务 |
 | 每日重置 | 凌晨 0:01 自动重置所有任务 |
@@ -25,6 +26,7 @@
 | 日历视图 | 月历展示，点击日期查看当天任务完成情况 |
 | 闹钟提醒 | 为任务设置提醒时间，到点发送通知 |
 | 电池优化白名单 | 引导用户将 App 加入电池优化白名单，确保闹钟准时触发 |
+| 未完成任务提醒 | 每天 20:00 自动检查未完成任务，发送悬浮通知，支持「稍后提醒」和「已知晓」 |
 
 ## 快速开始
 
@@ -56,6 +58,23 @@ app/build/outputs/apk/debug/app-debug.apk
 2. 找到「任务打卡」，长按拖到桌面即可
 
 ## 更新日志
+
+### v1.1.2 (2026-04-24)
+
+**新增功能**
+- **未完成任务提醒**：每天 20:00 自动检查当日未完成任务，推送悬浮通知提醒用户，最多显示3个任务名称。支持「请稍后提醒」（15分钟后再次通知）和「我已知晓」（今日不再提示）两种操作。
+- **删除恢复**：底部栏撤销按钮同时支持恢复误删任务，删除任务时会自动保存任务信息供撤销使用。
+
+**Bug 修复**
+- 修复撤回按钮偶发不响应的问题（StateFlow 初始化顺序修正）
+- 修复撤回按钮状态更新延迟问题（协程执行顺序调整，确保 UI 立即响应）
+- 修复「任务已添加」「已删除」等提示 Snackbar 遮挡底部操作栏的问题，改为 Toast 显示
+- 修复 Database.kt 中重复 `getAllTasksSync()` 方法导致的编译错误
+- 修复 IncompleteTaskCheckWorker 中类型推断失败的问题
+- 修复 TaskWidgetFactory 调用同步方法时的空指针问题
+
+**UI 优化**
+- 底部操作栏按钮新增 MaterialCardView 边框样式，视觉更清晰
 
 ### v1.1.1 (2026-04-24)
 
@@ -119,6 +138,7 @@ app/build/outputs/apk/debug/app-debug.apk
 │                  定时任务                    │
 │  DailyResetWorker · AlarmScheduler          │
 │  BootReceiver · AlarmReceiver               │
+│  IncompleteTaskCheckWorker                 │
 └─────────────────────────────────────────────┘
 ```
 
@@ -153,6 +173,14 @@ app/build/outputs/apk/debug/app-debug.apk
 - 到时间由 AlarmReceiver 接收广播，发送系统通知
 - BootReceiver 监听开机广播，重新注册所有闹钟
 - 需要用户授予通知权限并加入电池优化白名单
+
+### 未完成任务提醒
+
+每天 20:00 通过 WorkManager 定时检查：
+- 查询当日未完成的每日任务和日程任务
+- 发送带操作按钮的悬浮通知
+- 「请稍后提醒」通过 AlarmManager 延迟15分钟再次触发
+- 「我已知晓」通过 SharedPreferences 记录当日已忽略，下次检查跳过
 
 ### 小组件
 
@@ -208,7 +236,11 @@ task-checkin/
         │       ├── AlarmScheduler.kt
         │       ├── AlarmReceiver.kt
         │       ├── BootReceiver.kt
-        │       └── NotificationHelper.kt
+        │       ├── NotificationHelper.kt
+        │       ├── IncompleteTaskReminder.kt
+        │       ├── ReminderActionReceiver.kt
+        │       ├── ReminderLaterReceiver.kt
+        │       └── IncompleteTaskCheckWorker.kt
         └── res/
             ├── layout/
             ├── xml/

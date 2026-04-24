@@ -40,6 +40,8 @@
     <!-- 新建任务面板 -->
     <string name="new_task">新建任务</string>
     <string name="task_title_hint">输入任务名称</string>
+    <string name="only_today_switch">📌 仅今日显示</string>
+    <string name="only_today_switch_desc">关闭后任务每天重复出现</string>
     <string name="schedule_switch">📅 设置具体时间提醒</string>
     <string name="schedule_switch_desc">开启后将创建日程任务</string>
     <string name="select_date">选择日期</string>
@@ -78,11 +80,8 @@
     <string name="confirm_delete_title">删除任务</string>
     <string name="confirm_delete_msg">确定删除「%s」？</string>
 
-    <!-- 背景图 -->
-    <string name="set_background">设置背景</string>
-    <string name="background_image">背景图片</string>
-    <string name="pick_background">选择背景图片</string>
-    <string name="clear_background">恢复默认背景</string>
-    <string name="background_set">背景已设置</string>
-    <string name="background_cleared">已恢复默认背景</string>
+    <!-- 未完成任务提醒 -->
+    <string name="reminder_incomplete_title">📌 您今日还有任务未完成</string>
+    <string name="reminder_later">请稍后提醒</string>
+    <string name="reminder_dismiss">我已知晓</string>
 </resources>
